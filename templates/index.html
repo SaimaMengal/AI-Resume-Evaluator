@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartCV AI | Advanced Resume Evaluation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --bg-global: #f8fafc;
+      --surface-white: #ffffff;
+      --text-main: #1e293b;
+      --text-gray: #64748b;
+      --brand-blue: #1a73e8;
+      --brand-hover: #1557b0;
+      --border-soft: #e2e8f0;
+      --green-score: #10b981;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* FULLSCREEN RESET: Scrollbar blocks completely removed */
+    html, body {
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-global);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--surface-white);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 14px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 60px; /* Fixed Header Height */
+      flex-shrink: 0;
+    }
+
+    .brand-logo-node {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-logo-node span {
+      color: var(--brand-blue);
+    }
+
+    .system-status-pill {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--brand-blue);
+      background-color: #e8f0fe;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    /* DYNAMIC VIEWPORT MATRIX MAPPED TO WINDOW HEIGHT */
+    .app-grid-workspace {
+      flex: 1;
+      height: calc(100vh - 60px);
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: stretch;
+      overflow: hidden;
+    }
+
+    .panel-left-control {
+      background-color: var(--surface-white);
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      padding: 32px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(15,23,42,0.015);
+      overflow: hidden;
+    }
+
+    .hero-text-block h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+    }
+
+    .hero-text-block h1 span {
+      color: var(--brand-blue);
+    }
+
+    .hero-text-block p {
+      color: var(--text-gray);
+      font-size: 0.98rem;
+      line-height: 1.45;
+      margin-bottom: 20px;
+    }
+
+    .premium-graphic-container {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      border-radius: 12px;
+      flex: 1;
+      min-height: 140px;
+      max-height: 220px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border: 1px dashed rgba(0,0,0,0.05);
+    }
+
+    .vector-cv-mockup {
+      width: 105px;
+      height: 135px;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transform: translateY(10px);
+    }
+
+    .vector-line {
+      height: 5px;
+      background: #e2e8f0;
+      border-radius: 2px;
+      width: 100%;
+    }
+
+    .vector-line.short { width: 60%; }
+    .vector-line.accent-line { background: #34d399; width: 40%; }
+
+    .vector-ai-radar {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(26,115,232,0) 0%, rgba(26,115,232,1) 50%, rgba(26,115,232,0) 100%);
+      animation: scanMovement 2.5s ease-in-out infinite;
+    }
+
+    @keyframes scanMovement {
+      0% { top: 10%; opacity: 0.3; }
+      50% { top: 90%; opacity: 1; }
+      100% { top: 10%; opacity: 0.3; }
+    }
+
+    .control-action-layer {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .master-upload-btn {
+      background-color: var(--brand-blue);
+      color: #ffffff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      box-shadow: 0 4px 10px rgba(26,115,232,0.2);
+    }
+
+    .master-upload-btn:hover {
+      background-color: var(--brand-hover);
+    }
+
+    .master-upload-btn:active {
+      transform: scale(0.98);
+    }
+
+    #hiddenFileElement {
+      display: none;
+    }
+
+    .file-confirmation-badge {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--green-score);
+      font-weight: 600;
+      background-color: rgba(16,185,129,0.06);
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(16,185,129,0.1);
+    }
+
+    /* MATCHING BLUE WITH FIXED BOX CONSTRAINT */
+    .panel-right-telemetry {
+      background-color: #1a73e8;
+      border-radius: 16px;
+      color: #ffffff;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 30px rgba(26,115,232,0.15);
+      overflow: hidden;
+    }
+
+    /* VACANT STATE SYSTEM WITHOUT EMOJIS */
+    .console-vacant-msg {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .console-vacant-msg h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+
+    .console-vacant-msg p {
+      color: #e8f0fe;
+      font-size: 1rem;
+      line-height: 1.5;
+      max-width: 380px;
+      margin-bottom: 28px;
+    }
+
+    /* CLEAN MODERN LIST REPLACING EMOJIS WITH DASH/BULLET EFFECT */
+    .vacant-features-list {
+      list-style: none;
+      text-align: left;
+      display: inline-flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 20px 28px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .vacant-features-list li {
+      font-size: 0.92rem;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 500;
+    }
+
+    .vacant-features-list li::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 2px;
+      background-color: #e8f0fe;
+      border-radius: 2px;
+    }
+
+    .console-loading-msg {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .spinner-element-ring {
+      width: 42px;
+      height: 42px;
+      border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spinLoop 0.8s linear infinite;
+      margin-bottom: 18px;
+    }
+
+    @keyframes spinLoop { to { transform: rotate(360deg); } }
+
+    .console-active-data-view {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0; /* Prevents container from stretching workspace */
+    }
+
+    .metric-score-banner {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: rgba(255,255,255,0.1);
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+
+    .score-radial-node {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 4.5px solid var(--green-score);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #ffffff;
+      flex-shrink: 0;
+      background: rgba(0,0,0,0.2);
+    }
+
+    .score-headlines h3 { font-size: 1.05rem; margin-bottom: 2px; color: #ffffff; }
+    .score-headlines p { color: #e8f0fe; font-size: 0.82rem; line-height: 1.4; }
+
+    .tab-navigation-bar {
+      display: flex;
+      gap: 6px;
+      background: rgba(0,0,0,0.15);
+      padding: 4px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    .tab-trigger-node {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #e8f0fe;
+      padding: 9px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-trigger-node.active-tab, .tab-trigger-node:hover {
+      background-color: #ffffff;
+      color: var(--brand-blue);
+    }
+
+    /* LOCAL SCROLL ISOLATED ONLY FOR DATA CONTENT */
+    .viewport-scroll-box {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .viewport-scroll-box::-webkit-scrollbar { width: 4px; }
+    .viewport-scroll-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
+
+    .pane-view-block { display: none; }
+    .pane-view-block.active-pane-layer { display: block; }
+
+    .flex-pills-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill-node { padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
+    .pill-node.pill-pass { background-color: #ffffff; color: var(--brand-blue); }
+    .pill-node.pill-fail { background-color: rgba(0,0,0,0.2); color: #ff8a8a; border: 1px solid rgba(255,255,255,0.1); }
+
+    .data-cards-stack { display: flex; flex-direction: column; gap: 8px; }
+    .console-data-card { padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 0.85rem; color: #ffffff; line-height: 1.45; border: 1px solid rgba(255,255,255,0.05); }
+
+    .roadmap-timeline-card { padding: 12px; background: rgba(255,255,255,0.1); border-left: 4px solid #ffffff; border-radius: 0 8px 8px 0; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.05); }
+    .roadmap-timeline-card.critical-priority { border-left-color: #ff4a4a; background: rgba(255, 74, 74, 0.1); }
+    .roadmap-timeline-card h5 { font-size: 0.88rem; font-weight: 600; margin-bottom: 3px; color: #ffffff; }
+    .roadmap-timeline-card p { font-size: 0.8rem; color: #e8f0fe; line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-logo-node">SmartCV<span>.ai</span></div>
+    <div class="system-status-pill">ATS Analyzer Sandbox Mode</div>
+  </header>
+
+  <div class="app-grid-workspace">
+    
+    <div class="panel-left-control">
+      <div class="hero-text-block">
+        <h1>Optimize your resume for <span>ATS scanners</span></h1>
+        <p>Instantly scan your resume text alignment against live platform criteria to uncover critical competency omissions and improve metrics formatting.</p>
+      </div>
+
+      <div class="premium-graphic-container">
+        <div class="vector-ai-radar"></div>
+        <div class="vector-cv-mockup">
+          <div class="vector-line" style="height:12px; background:#cbd5e1; width:35%; margin-bottom:4px;"></div>
+          <div class="vector-line"></div>
+          <div class="vector-line"></div>
+          <div class="vector-line short"></div>
+          <div class="vector-line accent-line" style="margin-top:6px;"></div>
+          <div class="vector-line" style="margin-top:4px;"></div>
+          <div class="vector-line short"></div>
+        </div>
+      </div>
+
+      <div class="control-action-layer">
+        <button class="master-upload-btn" id="masterUploadActionBtn">Upload my resume</button>
+        <input type="file" id="hiddenFileElement" accept=".pdf,.docx">
+
+        <div class="file-confirmation-badge" id="fileConfirmationBadge">
+          <span style="display:inline-block; width:8px; height:8px; background:var(--green-score); border-radius:50%;"></span>
+          <span id="targetFileNameText">Document mounted successfully.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-right-telemetry">
+      
+      <div class="console-vacant-msg" id="vacantState">
+        <h2>Ready for AI Insights?</h2>
+        <p>Please upload your resume to start the AI analysis pipeline and unlock your scores.</p>
+        
+        <ul class="vacant-features-list">
+          <li>Instant ATS Benchmarking</li>
+          <li>Deep Keywords Gap Discovery</li>
+          <li>Tailored Career Refinement Roadmap</li>
+        </ul>
+      </div>
+
+      <div class="console-loading-msg" id="loadingState">
+        <div class="spinner-element-ring"></div>
+        <p style="font-size:0.95rem; font-weight:500; color:#ffffff;">Running Advanced ATS Scoring Routines...</p>
+      </div>
+
+      <div class="console-active-data-view" id="activeDataState">
+        
+        <div class="metric-score-banner">
+          <div class="score-radial-node" id="renderScoreValue">0</div>
+          <div class="score-headlines">
+            <h3>Resume Evaluation Finalized</h3>
+            <p id="renderOverviewText"></p>
+          </div>
+        </div>
+
+        <div class="tab-navigation-bar">
+          <button class="tab-trigger-node active-tab" onclick="switchConsoleTab('paneSkills', this)">Skills Audit</button>
+          <button class="tab-trigger-node" onclick="switchConsoleTab('paneStrengths', this)">Core Strengths</button>
+          <button class="tab-trigger-node" onclick="switchConsoleTab('paneWeaknesses', this)">Vulnerabilities</button>
+          <button class="tab-trigger-node" onclick="switchConsoleTab('paneRoadmap', this)">Roadmap</button>
+        </div>
+
+        <div class="viewport-scroll-box">
+          
+          <div class="pane-view-block active-pane-layer" id="paneSkills">
+            <h4 style="font-size:0.8rem; color:#e8f0fe; margin-bottom:10px; font-weight:600; text-transform:uppercase; letter-spacing: 0.03em;">Identified System Competencies</h4>
+            <div class="flex-pills-row" id="boxFoundSkills" style="margin-bottom:22px;"></div>
+            <h4 style="font-size:0.8rem; color:#e8f0fe; margin-bottom:10px; font-weight:600; text-transform:uppercase; letter-spacing: 0.03em;">Recommended Target Tags</h4>
+            <div class="flex-pills-row" id="boxMissingSkills"></div>
+          </div>
+
+          <div class="pane-view-block" id="paneStrengths">
+            <div class="data-cards-stack" id="boxStrengths"></div>
+          </div>
+
+          <div class="pane-view-block" id="paneWeaknesses">
+            <div class="data-cards-stack" id="boxWeaknesses"></div>
+          </div>
+
+          <div class="pane-view-block" id="paneRoadmap">
+            <div id="boxRoadmap"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const masterUploadActionBtn = document.getElementById("masterUploadActionBtn");
+      const hiddenFileElement = document.getElementById("hiddenFileElement");
+
+      masterUploadActionBtn.addEventListener("click", () => hiddenFileElement.click());
+
+      hiddenFileElement.addEventListener("change", () => {
+        if (hiddenFileElement.files && hiddenFileElement.files[0]) {
+          const selectedFileObj = hiddenFileElement.files[0];
+          document.getElementById("targetFileNameText").textContent = `Selected: ${selectedFileObj.name}`;
+          document.getElementById("fileConfirmationBadge").style.display = "flex";
+          streamFileToAnalysisEngine(selectedFileObj);
+        }
+      });
+    });
+
+    async function streamFileToAnalysisEngine(fileObject) {
+      document.getElementById("vacantState").style.display = "none";
+      document.getElementById("activeDataState").style.display = "none";
+      document.getElementById("loadingState").style.display = "flex";
+
+      const transitDataForm = new FormData();
+      transitDataForm.append("resume", fileObject);
+
+      try {
+        const response = await fetch("/analyze", { method: "POST", body: transitDataForm });
+        const resolvedDataMap = await response.json();
+        populateTelemetryConsoleOutput(resolvedDataMap);
+      } catch (err) {
+        alert("Pipeline parsing connection dropped or configuration validation timed out.");
+        document.getElementById("loadingState").style.display = "none";
+        document.getElementById("vacantState").style.display = "flex";
+      }
+    }
+
+    function populateTelemetryConsoleOutput(data) {
+      document.getElementById("loadingState").style.display = "none";
+      document.getElementById("activeDataState").style.display = "flex";
+
+      document.getElementById("renderScoreValue").textContent = data.overallScore || 0;
+      document.getElementById("renderOverviewText").textContent = data.overview || "";
+
+      document.getElementById("boxFoundSkills").innerHTML = (data.skillsFound || []).map(val => `<span class="pill-node pill-pass">${val}</span>`).join("");
+      document.getElementById("boxMissingSkills").innerHTML = (data.skillsMissing || []).map(val => `<span class="pill-node pill-fail">${val}</span>`).join("");
+      
+      document.getElementById("boxStrengths").innerHTML = (data.strengths || []).map(line => `<div class="console-data-card">${line}</div>`).join("");
+      document.getElementById("boxWeaknesses").innerHTML = (data.weaknesses || []).map(line => `<div class="console-data-card">${line}</div>`).join("");
+
+      document.getElementById("boxRoadmap").innerHTML = (data.suggestions || []).map(item => `
+        <div class="roadmap-timeline-card ${item.priority.toLowerCase() === 'high' ? 'critical-priority' : ''}">
+          <h5>${item.title} <span style="font-size:0.72rem; color:#e8f0fe; font-weight:400; margin-left:4px; opacity:0.8;">[${item.priority}]</span></h5>
+          <p>${item.detail}</p>
+        </div>
+      `).join("");
+    }
+
+    function switchConsoleTab(targetViewPaneId, elementTriggerNode) {
+      document.querySelectorAll(".tab-trigger-node").forEach(btn => btn.classList.remove("active-tab"));
+      document.querySelectorAll(".pane-view-block").forEach(pane => pane.classList.remove("active-pane-layer"));
+      
+      elementTriggerNode.classList.add("active-tab");
+      document.getElementById(targetViewPaneId).classList.add("active-pane-layer");
+    }
+  </script>
+</body>
+</html>
